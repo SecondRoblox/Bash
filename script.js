@@ -1,27 +1,19 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const { exec } = require('child_process');
+const socket = io();
+const output = document.getElementById('output');
+const input = document.getElementById('input');
 
-const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+input.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        const command = input.value;
+        input.value = '';
 
-app.use(express.static('public'));
-
-io.on('connection', (socket) => {
-    socket.on('command', (cmd) => {
-        exec(cmd, (error, stdout, stderr) => {
-            if (error) {
-                socket.emit('output', `Error: ${stderr}`);
-            } else {
-                socket.emit('output', stdout);
-            }
-        });
-    });
+        // Send command to the server
+        socket.emit('command', command);
+        output.innerHTML += `$ ${command}<br>`;
+    }
 });
 
-server.listen(3000, () => {
-    console.log('Server is running on http://localhost:3000');
+socket.on('output', function (data) {
+    output.innerHTML += `${data}<br>`;
+    output.scrollTop = output.scrollHeight; // Scroll to bottom
 });
-
